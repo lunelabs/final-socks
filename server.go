@@ -10,8 +10,9 @@ import (
 type Handler func(ResponseWriter, *Request)
 
 type Server struct {
-	addr    string
-	handler Handler
+	addr         string
+	handler      Handler
+	authHandlers map[uint8]AuthHandler
 }
 
 func NewServer(addr string, handler Handler) *Server {
@@ -20,8 +21,9 @@ func NewServer(addr string, handler Handler) *Server {
 	}
 
 	return &Server{
-		addr:    addr,
-		handler: handler,
+		addr:         addr,
+		handler:      handler,
+		authHandlers: map[uint8]AuthHandler{},
 	}
 }
 
@@ -109,12 +111,8 @@ func (s *Server) authenticate(bufConn *bufio.Reader, rw ResponseWriter) error {
 	}
 
 	for _, authMethod := range authMethods {
-		if authMethod == AuthNoAuth {
-			if err = rw.SendNoAuth(); err != nil {
-				return err
-			}
-
-			return nil
+		if handler, ok := s.authHandlers[authMethod]; ok {
+			return handler.Authenticate(bufConn, rw)
 		}
 	}
 

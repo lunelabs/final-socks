@@ -6,7 +6,11 @@ const (
 
 const (
 	AuthNoAuth       = uint8(0)
+	AuthUserPass     = uint8(2)
+	AuthVersion      = uint8(1)
 	AuthNoAcceptable = uint8(255)
+	AuthSuccess      = uint8(0)
+	AuthFailure      = uint8(1)
 )
 
 const (
