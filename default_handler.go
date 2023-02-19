@@ -2,12 +2,16 @@ package final_socks
 
 import (
 	"bitbucket.org/lunelabs/final-socks/pool"
+	"context"
 	"fmt"
 	"net"
-	"sync"
 )
 
 var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
+	defer func() {
+		fmt.Println("end", r.Command)
+	}()
+
 	if r.Command != CommandConnect && r.Command != CommandAssociate {
 		w.SendNotSupportedCommand()
 
@@ -61,46 +65,50 @@ var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
 			return
 		}
 
-		var nm sync.Map
+		errChan := make(chan error)
+		ctx, cancel := context.WithCancel(context.Background())
 
 		go func() {
+			buf := pool.GetBuffer(1)
+			defer pool.PutBuffer(buf)
+
 			for {
-				c := NewPktConn(udpListener, nil, nil, nil)
-				buf := pool.GetBuffer(UDPBufSize)
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					_, err := r.BufConn.Read(buf)
 
-				n, srcAddr, dstAddr, err := c.ReadFrom2(buf)
-				if err != nil {
-					continue
+					if err, ok := err.(net.Error); ok && err.Timeout() {
+						continue
+					}
+
+					errChan <- nil
 				}
-
-				var session *Session
-				sessionKey := srcAddr.String()
-
-				v, ok := nm.Load(sessionKey)
-				if !ok || v == nil {
-					session = newSession(sessionKey, srcAddr, dstAddr, c)
-					nm.Store(sessionKey, session)
-					go serveSession(session)
-				} else {
-					session = v.(*Session)
-				}
-
-				session.msgCh <- message{dstAddr, buf[:n]}
 			}
 		}()
 
-		buf := pool.GetBuffer(1)
-		defer pool.PutBuffer(buf)
+		go func() {
+			c := NewPktConn(udpListener, nil, nil, nil)
+			buf := pool.GetBuffer(UDPBufSize)
 
-		for {
-			_, err := r.BufConn.Read(buf)
+			n, srcAddr, dstAddr, err := c.ReadFrom2(buf)
 
-			if err, ok := err.(net.Error); ok && err.Timeout() {
-				continue
+			if err != nil {
+				errChan <- err
+
+				return
 			}
 
-			return
-		}
+			sessionKey := srcAddr.String()
+			session := newSession(sessionKey, srcAddr, dstAddr, c)
+
+			go serveSession(ctx, session, errChan)
+			session.msgCh <- message{dstAddr, buf[:n]}
+		}()
+
+		err = <-errChan
+		cancel()
 
 		return
 	}

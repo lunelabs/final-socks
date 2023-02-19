@@ -2,6 +2,7 @@ package final_socks
 
 import (
 	"bitbucket.org/lunelabs/final-socks/pool"
+	"bufio"
 	"errors"
 	"net"
 	"net/netip"
@@ -13,13 +14,13 @@ var UDPBufSize = 2 << 10
 // PktConn .
 type PktConn struct {
 	net.PacketConn
-	ctrlConn net.Conn // tcp control conn
-	writeTo  net.Addr // write to and read from addr
+	ctrlConn *bufio.Reader // tcp control conn
+	writeTo  net.Addr      // write to and read from addr
 	target   Addr
 }
 
 // NewPktConn returns a PktConn, the writeAddr must be *net.UDPAddr or *net.UnixAddr.
-func NewPktConn(c net.PacketConn, writeAddr net.Addr, targetAddr Addr, ctrlConn net.Conn) *PktConn {
+func NewPktConn(c net.PacketConn, writeAddr net.Addr, targetAddr Addr, ctrlConn *bufio.Reader) *PktConn {
 	pc := &PktConn{
 		PacketConn: c,
 		writeTo:    writeAddr,
@@ -130,9 +131,9 @@ func (pc *PktConn) WriteTo(b []byte, addr net.Addr) (int, error) {
 
 // Close .
 func (pc *PktConn) Close() error {
-	if pc.ctrlConn != nil {
-		pc.ctrlConn.Close()
-	}
+	//if pc.ctrlConn != nil {
+	//	pc.ctrlConn.Close()
+	//}
 
 	return pc.PacketConn.Close()
 }

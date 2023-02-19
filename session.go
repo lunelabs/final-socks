@@ -3,6 +3,7 @@ package final_socks
 import (
 	"bitbucket.org/lunelabs/final-socks/pool"
 	"context"
+	"fmt"
 	"net"
 	"time"
 )
@@ -12,7 +13,7 @@ type message struct {
 	msg []byte
 }
 
-// Session is a udp session
+// Session is udp session
 type Session struct {
 	key   string
 	src   net.Addr
@@ -26,34 +27,40 @@ func newSession(key string, src, dst net.Addr, srcPC *PktConn) *Session {
 	return &Session{key, src, dst, srcPC, make(chan message, 32), make(chan struct{})}
 }
 
-func serveSession(session *Session) {
+func serveSession(ctx context.Context, session *Session, errChan chan error) {
 	dstPC, err := DialUDP("udp", session.srcPC.GetTarget())
 
 	if err != nil {
-		//log.F("[socks5u] remote dial error: %v", err)
-		//nm.Delete(session.key)
+		errChan <- err
+
 		return
 	}
+
 	defer dstPC.Close()
 
 	go func() {
 		CopyUDP(session.srcPC, nil, dstPC, 2*time.Minute, 5*time.Second)
-		//nm.Delete(session.key)
+
 		close(session.finCh)
 	}()
-
-	//log.F("[socks5u] %s <-> %s via %s", session.src, session.srcPC.target, dialer.Addr())
 
 	for {
 		select {
 		case msg := <-session.msgCh:
 			_, err = dstPC.WriteTo(msg.msg, msg.dst)
+
 			if err != nil {
-				//log.F("[socks5u] writeTo %s error: %v", msg.dst, err)
+				fmt.Println(err)
 			}
+
 			pool.PutBuffer(msg.msg)
 			msg.msg = nil
 		case <-session.finCh:
+			errChan <- nil
+
+			return
+		case <-ctx.Done():
+
 			return
 		}
 	}
@@ -73,7 +80,7 @@ func DialUDP(network, addr string) (pc net.PacketConn, err error) {
 	return lc.ListenPacket(context.Background(), network, la)
 }
 
-// CopyUDP copys from src to dst at target with read timeout.
+// CopyUDP copies from src to dst at target with read timeout.
 // if step sets to non-zero value,
 // the read timeout will be increased from 0 to timeout by step in every read operation.
 func CopyUDP(dst net.PacketConn, writeTo net.Addr, src net.PacketConn, timeout time.Duration, step time.Duration) error {
@@ -97,6 +104,7 @@ func CopyUDP(dst net.PacketConn, writeTo net.Addr, src net.PacketConn, timeout t
 		}
 
 		_, err = dst.WriteTo(buf[:n], addr)
+
 		if err != nil {
 			return err
 		}
