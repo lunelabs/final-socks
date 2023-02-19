@@ -28,8 +28,38 @@ func (rw ResponseWriter) SendNoAuth() error {
 	return nil
 }
 
+func (rw ResponseWriter) SendUserPassAuth() error {
+	_, err := rw.conn.Write([]byte{VersionSocks5, AuthUserPass})
+
+	if err != nil {
+		return errors.Wrap(err, "sending no auth failed")
+	}
+
+	return nil
+}
+
 func (rw ResponseWriter) SendNoAcceptableAuth() error {
 	_, err := rw.conn.Write([]byte{VersionSocks5, AuthNoAcceptable})
+
+	if err != nil {
+		return errors.Wrap(err, "sending no acceptable auth failed")
+	}
+
+	return nil
+}
+
+func (rw ResponseWriter) SendAuthSuccess() error {
+	_, err := rw.conn.Write([]byte{VersionSocks5, AuthSuccess})
+
+	if err != nil {
+		return errors.Wrap(err, "sending no acceptable auth failed")
+	}
+
+	return nil
+}
+
+func (rw ResponseWriter) SendAuthFailure() error {
+	_, err := rw.conn.Write([]byte{VersionSocks5, AuthFailure})
 
 	if err != nil {
 		return errors.Wrap(err, "sending no acceptable auth failed")
