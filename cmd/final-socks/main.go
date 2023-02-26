@@ -1,8 +1,8 @@
 package main
 
 import (
-	finalsocks "bitbucket.org/lunelabs/final-socks"
 	"fmt"
+	finalsocks "github.com/lunelabs/final-socks"
 	"os"
 )
 

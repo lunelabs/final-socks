@@ -1,9 +1,9 @@
 package final_socks
 
 import (
-	"bitbucket.org/lunelabs/final-socks/pool"
 	"context"
 	"fmt"
+	"github.com/lunelabs/final-socks/pool"
 	"net"
 )
 

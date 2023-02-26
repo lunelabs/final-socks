@@ -1,9 +1,9 @@
 package final_socks
 
 import (
-	"bitbucket.org/lunelabs/final-socks/pool"
 	"bufio"
 	"errors"
+	"github.com/lunelabs/final-socks/pool"
 	"net"
 	"net/netip"
 	"strconv"

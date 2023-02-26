@@ -1,4 +1,4 @@
-module bitbucket.org/lunelabs/final-socks
+module github.com/lunelabs/final-socks
 
 go 1.19
 
