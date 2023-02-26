@@ -1,7 +1,9 @@
 package final_socks
 
-import "io"
+import (
+	"net"
+)
 
 type AuthHandler interface {
-	Authenticate(reader io.Reader, rw ResponseWriter) error
+	Authenticate(conn net.Conn, rw ResponseWriter) error
 }

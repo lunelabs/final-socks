@@ -1,8 +1,10 @@
 package final_socks
 
 import (
+	"bufio"
 	"fmt"
 	"io"
+	"net"
 )
 
 type UserPassAuthHandler struct {
@@ -17,12 +19,13 @@ func NewUserPassAuthHandler(username, password string) *UserPassAuthHandler {
 	}
 }
 
-func (h *UserPassAuthHandler) Authenticate(reader io.Reader, rw ResponseWriter) error {
+func (h *UserPassAuthHandler) Authenticate(conn net.Conn, rw ResponseWriter) error {
 	if err := rw.SendUserPassAuth(); err != nil {
 		return err
 	}
 
 	header := []byte{0, 0}
+	reader := bufio.NewReader(conn)
 
 	if _, err := io.ReadAtLeast(reader, header, 2); err != nil {
 		return err
