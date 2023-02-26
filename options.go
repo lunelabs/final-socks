@@ -4,7 +4,7 @@ type Option func(*Server) error
 
 func NoAuthOption() Option {
 	return func(s *Server) error {
-		s.authHandlers[AuthNoAuth] = NewNoAuthHandler()
+		s.AuthHandlers[AuthNoAuth] = NewNoAuthHandler()
 
 		return nil
 	}
@@ -12,7 +12,7 @@ func NoAuthOption() Option {
 
 func UserPassAuth(user, pass string) Option {
 	return func(s *Server) error {
-		s.authHandlers[AuthUserPass] = NewUserPassAuthHandler(user, pass)
+		s.AuthHandlers[AuthUserPass] = NewUserPassAuthHandler(user, pass)
 
 		return nil
 	}
