@@ -101,9 +101,9 @@ var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
 			}
 
 			sessionKey := srcAddr.String()
-			session := newSession(sessionKey, srcAddr, dstAddr, c)
+			session := NewSession(sessionKey, srcAddr, dstAddr, c)
 
-			go serveSession(ctx, session, errChan)
+			go ServeSession(ctx, session, errChan)
 			session.msgCh <- message{dstAddr, buf[:n]}
 		}()
 

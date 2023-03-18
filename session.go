@@ -23,11 +23,11 @@ type Session struct {
 	finCh chan struct{}
 }
 
-func newSession(key string, src, dst net.Addr, srcPC *PktConn) *Session {
+func NewSession(key string, src, dst net.Addr, srcPC *PktConn) *Session {
 	return &Session{key, src, dst, srcPC, make(chan message, 32), make(chan struct{})}
 }
 
-func serveSession(ctx context.Context, session *Session, errChan chan error) {
+func ServeSession(ctx context.Context, session *Session, errChan chan error) {
 	dstPC, err := DialUDP("udp", session.srcPC.GetTarget())
 
 	if err != nil {
