@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type message struct {
+type Message struct {
 	dst net.Addr
 	msg []byte
 }
@@ -19,16 +19,20 @@ type Session struct {
 	src   net.Addr
 	dst   net.Addr
 	srcPC *PktConn
-	msgCh chan message
+	msgCh chan Message
 	finCh chan struct{}
 }
 
 func NewSession(key string, src, dst net.Addr, srcPC *PktConn) *Session {
-	return &Session{key, src, dst, srcPC, make(chan message, 32), make(chan struct{})}
+	return &Session{key, src, dst, srcPC, make(chan Message, 32), make(chan struct{})}
 }
 
-func ServeSession(ctx context.Context, session *Session, errChan chan error) {
-	dstPC, err := DialUDP("udp", session.srcPC.GetTarget())
+func (s *Session) ProcessMessage(message Message) {
+	s.msgCh <- message
+}
+
+func (s *Session) Serve(ctx context.Context, errChan chan error) {
+	dstPC, err := DialUDP("udp", s.srcPC.GetTarget())
 
 	if err != nil {
 		errChan <- err
@@ -39,14 +43,14 @@ func ServeSession(ctx context.Context, session *Session, errChan chan error) {
 	defer dstPC.Close()
 
 	go func() {
-		CopyUDP(session.srcPC, nil, dstPC, 2*time.Minute, 5*time.Second)
+		CopyUDP(s.srcPC, nil, dstPC, 2*time.Minute, 5*time.Second)
 
-		close(session.finCh)
+		close(s.finCh)
 	}()
 
 	for {
 		select {
-		case msg := <-session.msgCh:
+		case msg := <-s.msgCh:
 			_, err = dstPC.WriteTo(msg.msg, msg.dst)
 
 			if err != nil {
@@ -55,7 +59,7 @@ func ServeSession(ctx context.Context, session *Session, errChan chan error) {
 
 			pool.PutBuffer(msg.msg)
 			msg.msg = nil
-		case <-session.finCh:
+		case <-s.finCh:
 			errChan <- nil
 
 			return
