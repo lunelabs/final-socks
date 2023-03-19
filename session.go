@@ -9,8 +9,8 @@ import (
 )
 
 type Message struct {
-	dst net.Addr
-	msg []byte
+	Dst net.Addr
+	Msg []byte
 }
 
 // Session is udp session
@@ -51,14 +51,14 @@ func (s *Session) Serve(ctx context.Context, errChan chan error) {
 	for {
 		select {
 		case msg := <-s.msgCh:
-			_, err = dstPC.WriteTo(msg.msg, msg.dst)
+			_, err = dstPC.WriteTo(msg.Msg, msg.Dst)
 
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			pool.PutBuffer(msg.msg)
-			msg.msg = nil
+			pool.PutBuffer(msg.Msg)
+			msg.Msg = nil
 		case <-s.finCh:
 			errChan <- nil
 
@@ -84,7 +84,7 @@ func DialUDP(network, addr string) (pc net.PacketConn, err error) {
 	return lc.ListenPacket(context.Background(), network, la)
 }
 
-// CopyUDP copies from src to dst at target with read timeout.
+// CopyUDP copies from src to Dst at target with read timeout.
 // if step sets to non-zero value,
 // the read timeout will be increased from 0 to timeout by step in every read operation.
 func CopyUDP(dst net.PacketConn, writeTo net.Addr, src net.PacketConn, timeout time.Duration, step time.Duration) error {
