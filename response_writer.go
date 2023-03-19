@@ -138,7 +138,7 @@ func (rw ResponseWriter) SendReply(resp uint8, addr *AddrSpec) error {
 		return fmt.Errorf("failed to format address: %v", addr)
 	}
 
-	// Format the message
+	// Format the Message
 	msg := make([]byte, 6+len(addrBody))
 	msg[0] = VersionSocks5
 	msg[1] = resp
@@ -148,7 +148,7 @@ func (rw ResponseWriter) SendReply(resp uint8, addr *AddrSpec) error {
 	msg[4+len(addrBody)] = byte(addrPort >> 8)
 	msg[4+len(addrBody)+1] = byte(addrPort & 0xff)
 
-	// Send the message
+	// Send the Message
 	_, err := rw.conn.Write(msg)
 
 	return err

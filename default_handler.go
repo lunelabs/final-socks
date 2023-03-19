@@ -103,8 +103,9 @@ var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
 			sessionKey := srcAddr.String()
 			session := NewSession(sessionKey, srcAddr, dstAddr, c)
 
-			go ServeSession(ctx, session, errChan)
-			session.msgCh <- message{dstAddr, buf[:n]}
+			go session.Serve(ctx, errChan)
+
+			session.ProcessMessage(Message{dstAddr, buf[:n]})
 		}()
 
 		err = <-errChan
