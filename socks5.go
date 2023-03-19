@@ -14,6 +14,10 @@ const (
 )
 
 const (
+	UserAuthVersion = uint8(1)
+)
+
+const (
 	AddressIpv4 = uint8(1)
 	AddressFqdn = uint8(3)
 	AddressIpv6 = uint8(4)

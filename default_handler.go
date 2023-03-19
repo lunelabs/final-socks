@@ -101,7 +101,7 @@ var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
 			}
 
 			sessionKey := srcAddr.String()
-			session := NewSession(sessionKey, srcAddr, dstAddr, c)
+			session := NewSession(sessionKey, srcAddr, dstAddr, c, nil)
 
 			go session.Serve(ctx, errChan)
 
