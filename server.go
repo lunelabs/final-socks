@@ -68,7 +68,7 @@ func (s *Server) ServeConn(conn net.Conn) error {
 	}
 
 	rw := NewResponseWriter(conn)
-	err = s.authenticate(conn, bufConn, rw)
+	user, err := s.authenticate(conn, bufConn, rw)
 
 	if err != nil {
 		return errors.Wrap(err, "failed to authenticate")
@@ -84,6 +84,7 @@ func (s *Server) ServeConn(conn net.Conn) error {
 		return fmt.Errorf("unsupported socks version: %v", socksVersion)
 	}
 
+	req.User = user
 	req = s.decorateRequestWithConnectionInfo(req, conn)
 
 	s.handler(rw, req)
@@ -103,11 +104,11 @@ func (s *Server) decorateRequestWithConnectionInfo(req *Request, conn net.Conn) 
 	return req
 }
 
-func (s *Server) authenticate(conn net.Conn, bufConn *bufio.Reader, rw ResponseWriter) error {
+func (s *Server) authenticate(conn net.Conn, bufConn *bufio.Reader, rw ResponseWriter) (interface{}, error) {
 	authMethods, err := ReadAuthenticateMethods(bufConn)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, authMethod := range authMethods {
@@ -117,10 +118,10 @@ func (s *Server) authenticate(conn net.Conn, bufConn *bufio.Reader, rw ResponseW
 	}
 
 	if err = rw.SendNoAcceptableAuth(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return errors.New("authentication failed")
+	return nil, errors.New("authentication failed")
 }
 
 func Handle(handler Handler) {
