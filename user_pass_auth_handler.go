@@ -19,51 +19,51 @@ func NewUserPassAuthHandler(username, password string) *UserPassAuthHandler {
 	}
 }
 
-func (h *UserPassAuthHandler) Authenticate(conn net.Conn, rw ResponseWriter) error {
+func (h *UserPassAuthHandler) Authenticate(conn net.Conn, rw ResponseWriter) (interface{}, error) {
 	if err := rw.SendUserPassAuth(); err != nil {
-		return err
+		return nil, err
 	}
 
 	header := []byte{0, 0}
 	reader := bufio.NewReader(conn)
 
 	if _, err := io.ReadAtLeast(reader, header, 2); err != nil {
-		return err
+		return nil, err
 	}
 
 	if header[0] != AuthVersion {
-		return fmt.Errorf("unsupported auth version: %v", header[0])
+		return nil, fmt.Errorf("unsupported auth version: %v", header[0])
 	}
 
 	userLen := int(header[1])
 	user := make([]byte, userLen)
 
 	if _, err := io.ReadAtLeast(reader, user, userLen); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := reader.Read(header[:1]); err != nil {
-		return err
+		return nil, err
 	}
 
 	passLen := int(header[0])
 	pass := make([]byte, passLen)
 
 	if _, err := io.ReadAtLeast(reader, pass, passLen); err != nil {
-		return err
+		return nil, err
 	}
 
 	if h.username == string(user) && h.password == string(pass) {
 		if err := rw.SendAuthSuccess(); err != nil {
-			return err
+			return nil, err
 		}
 
-		return nil
+		return nil, nil
 	}
 
 	if err := rw.SendAuthFailure(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return nil, nil
 }

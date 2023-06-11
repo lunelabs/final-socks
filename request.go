@@ -14,6 +14,7 @@ type Request struct {
 	Version    uint8
 	Command    uint8
 	BufConn    *bufio.Reader
+	User       interface{}
 }
 
 func ReadSocksVersion(bufConn *bufio.Reader) (uint8, error) {

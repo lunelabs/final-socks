@@ -5,5 +5,5 @@ import (
 )
 
 type AuthHandler interface {
-	Authenticate(conn net.Conn, rw ResponseWriter) error
+	Authenticate(conn net.Conn, rw ResponseWriter) (interface{}, error)
 }

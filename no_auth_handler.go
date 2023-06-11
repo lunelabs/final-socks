@@ -11,10 +11,10 @@ func NewNoAuthHandler() *NoAuthHandler {
 	return &NoAuthHandler{}
 }
 
-func (h *NoAuthHandler) Authenticate(conn net.Conn, rw ResponseWriter) error {
+func (h *NoAuthHandler) Authenticate(conn net.Conn, rw ResponseWriter) (interface{}, error) {
 	if err := rw.SendNoAuth(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return nil, nil
 }
