@@ -1,7 +1,6 @@
 package final_socks
 
 import (
-	"bufio"
 	"errors"
 	"github.com/lunelabs/final-socks/pool"
 	"net"
@@ -14,33 +13,16 @@ var UDPBufSize = 2 << 10
 // PktConn .
 type PktConn struct {
 	net.PacketConn
-	ctrlConn *bufio.Reader // tcp control conn
-	writeTo  net.Addr      // write to and read from addr
-	target   Addr
+	writeTo net.Addr // write to and read from addr
+	target  Addr
 }
 
 // NewPktConn returns a PktConn, the writeAddr must be *net.UDPAddr or *net.UnixAddr.
-func NewPktConn(c net.PacketConn, writeAddr net.Addr, targetAddr Addr, ctrlConn *bufio.Reader) *PktConn {
+func NewPktConn(c net.PacketConn, writeAddr net.Addr, targetAddr Addr) *PktConn {
 	pc := &PktConn{
 		PacketConn: c,
 		writeTo:    writeAddr,
 		target:     targetAddr,
-		ctrlConn:   ctrlConn,
-	}
-
-	if ctrlConn != nil {
-		go func() {
-			buf := pool.GetBuffer(1)
-			defer pool.PutBuffer(buf)
-			for {
-				_, err := ctrlConn.Read(buf)
-				if err, ok := err.(net.Error); ok && err.Timeout() {
-					continue
-				}
-				// log.F("[socks5] dialudp udp associate end")
-				return
-			}
-		}()
 	}
 
 	return pc
@@ -131,10 +113,6 @@ func (pc *PktConn) WriteTo(b []byte, addr net.Addr) (int, error) {
 
 // Close .
 func (pc *PktConn) Close() error {
-	//if pc.ctrlConn != nil {
-	//	pc.ctrlConn.Close()
-	//}
-
 	return pc.PacketConn.Close()
 }
 
