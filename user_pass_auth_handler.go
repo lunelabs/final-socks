@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"net"
 )
 
 type UserPassAuthHandler struct {
@@ -18,7 +19,7 @@ func NewUserPassAuthHandler(username, password string) *UserPassAuthHandler {
 	}
 }
 
-func (h *UserPassAuthHandler) Authenticate(bufConn *bufio.Reader, rw ResponseWriter) (interface{}, error) {
+func (h *UserPassAuthHandler) Authenticate(conn net.Conn, bufConn *bufio.Reader, rw ResponseWriter) (interface{}, error) {
 	if err := rw.SendUserPassAuth(); err != nil {
 		return nil, err
 	}
