@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"net"
 )
 
 type UserPassAuthHandler struct {
@@ -19,15 +18,14 @@ func NewUserPassAuthHandler(username, password string) *UserPassAuthHandler {
 	}
 }
 
-func (h *UserPassAuthHandler) Authenticate(conn net.Conn, rw ResponseWriter) (interface{}, error) {
+func (h *UserPassAuthHandler) Authenticate(bufConn *bufio.Reader, rw ResponseWriter) (interface{}, error) {
 	if err := rw.SendUserPassAuth(); err != nil {
 		return nil, err
 	}
 
 	header := []byte{0, 0}
-	reader := bufio.NewReader(conn)
 
-	if _, err := io.ReadAtLeast(reader, header, 2); err != nil {
+	if _, err := io.ReadAtLeast(bufConn, header, 2); err != nil {
 		return nil, err
 	}
 
@@ -38,18 +36,18 @@ func (h *UserPassAuthHandler) Authenticate(conn net.Conn, rw ResponseWriter) (in
 	userLen := int(header[1])
 	user := make([]byte, userLen)
 
-	if _, err := io.ReadAtLeast(reader, user, userLen); err != nil {
+	if _, err := io.ReadAtLeast(bufConn, user, userLen); err != nil {
 		return nil, err
 	}
 
-	if _, err := reader.Read(header[:1]); err != nil {
+	if _, err := bufConn.Read(header[:1]); err != nil {
 		return nil, err
 	}
 
 	passLen := int(header[0])
 	pass := make([]byte, passLen)
 
-	if _, err := io.ReadAtLeast(reader, pass, passLen); err != nil {
+	if _, err := io.ReadAtLeast(bufConn, pass, passLen); err != nil {
 		return nil, err
 	}
 

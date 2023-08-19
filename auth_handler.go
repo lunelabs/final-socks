@@ -1,9 +1,9 @@
 package final_socks
 
 import (
-	"net"
+	"bufio"
 )
 
 type AuthHandler interface {
-	Authenticate(conn net.Conn, rw ResponseWriter) (interface{}, error)
+	Authenticate(bufConn *bufio.Reader, rw ResponseWriter) (interface{}, error)
 }

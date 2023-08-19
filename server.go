@@ -68,7 +68,7 @@ func (s *Server) ServeConn(conn net.Conn) error {
 	}
 
 	rw := NewResponseWriter(conn)
-	user, err := s.authenticate(conn, bufConn, rw)
+	user, err := s.authenticate(bufConn, rw)
 
 	if err != nil {
 		return errors.Wrap(err, "failed to authenticate")
@@ -104,7 +104,7 @@ func (s *Server) decorateRequestWithConnectionInfo(req *Request, conn net.Conn) 
 	return req
 }
 
-func (s *Server) authenticate(conn net.Conn, bufConn *bufio.Reader, rw ResponseWriter) (interface{}, error) {
+func (s *Server) authenticate(bufConn *bufio.Reader, rw ResponseWriter) (interface{}, error) {
 	authMethods, err := ReadAuthenticateMethods(bufConn)
 
 	if err != nil {
@@ -113,7 +113,7 @@ func (s *Server) authenticate(conn net.Conn, bufConn *bufio.Reader, rw ResponseW
 
 	for _, authMethod := range authMethods {
 		if handler, ok := s.AuthHandlers[authMethod]; ok {
-			return handler.Authenticate(conn, rw)
+			return handler.Authenticate(bufConn, rw)
 		}
 	}
 
