@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"io"
-	"net"
 	"strings"
 )
 
@@ -154,7 +153,7 @@ func (rw ResponseWriter) SendReply(resp uint8, addr *AddrSpec) error {
 	return err
 }
 
-func (rw ResponseWriter) Proxy(target net.Conn, bufConn io.Reader) error {
+func (rw ResponseWriter) Proxy(target io.ReadWriter, bufConn io.Reader) error {
 	errCh := make(chan error, 2)
 
 	go rw.proxy(target, bufConn, errCh)
@@ -169,6 +168,10 @@ func (rw ResponseWriter) Proxy(target net.Conn, bufConn io.Reader) error {
 	}
 
 	return nil
+}
+
+func (rw ResponseWriter) GetConnection() io.Writer {
+	return rw.conn
 }
 
 func (rw ResponseWriter) proxy(dst io.Writer, src io.Reader, errCh chan error) {
