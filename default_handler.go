@@ -89,7 +89,7 @@ var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
 		}()
 
 		go func() {
-			c := NewPktConn(udpListener, nil, nil, nil)
+			c := NewPktConn(udpListener, nil, nil)
 			buf := pool.GetBuffer(UDPBufSize)
 
 			n, srcAddr, dstAddr, err := c.ReadFrom2(buf)
