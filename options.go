@@ -17,3 +17,11 @@ func UserPassAuth(user, pass string) Option {
 		return nil
 	}
 }
+
+func DynamicUserPassAuth(authFunction AuthFunction) Option {
+	return func(s *Server) error {
+		s.AuthHandlers[AuthUserPass] = NewDynamicUserPassAuthHandler(authFunction)
+
+		return nil
+	}
+}

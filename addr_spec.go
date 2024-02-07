@@ -27,3 +27,11 @@ func (a *AddrSpec) Address() string {
 
 	return net.JoinHostPort(a.FQDN, strconv.Itoa(a.Port))
 }
+
+func (a *AddrSpec) Host() string {
+	if 0 != len(a.IP) {
+		return a.IP.String()
+	}
+
+	return a.FQDN
+}
