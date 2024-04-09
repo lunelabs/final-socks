@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	finalsocks "github.com/lunelabs/final-socks"
 	"os"
+
+	finalsocks "github.com/lunelabs/final-socks"
 )
 
 func main() {

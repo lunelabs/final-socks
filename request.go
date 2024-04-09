@@ -2,9 +2,10 @@ package final_socks
 
 import (
 	"bufio"
-	"github.com/pkg/errors"
 	"io"
 	"net"
+
+	"github.com/pkg/errors"
 )
 
 type Request struct {
