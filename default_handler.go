@@ -3,8 +3,9 @@ package final_socks
 import (
 	"context"
 	"fmt"
-	"github.com/lunelabs/final-socks/pool"
 	"net"
+
+	"github.com/lunelabs/final-socks/pool"
 )
 
 var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
@@ -13,7 +14,7 @@ var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
 	}()
 
 	if r.Command != CommandConnect && r.Command != CommandAssociate {
-		w.SendNotSupportedCommand()
+		_ = w.SendNotSupportedCommand()
 
 		return
 	}
@@ -22,7 +23,7 @@ var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
 		target, err := net.Dial("tcp", r.DestAddr.Address())
 
 		if err != nil {
-			w.SendNetworkError(err.Error())
+			_ = w.SendNetworkError(err.Error())
 
 			return
 		}
@@ -46,7 +47,7 @@ var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
 		udpListener, err := net.ListenPacket("udp", net.JoinHostPort(r.LocalAddr.IP.String(), "0"))
 
 		if err != nil {
-			w.SendGeneralServerFailure()
+			_ = w.SendGeneralServerFailure()
 
 			return
 		}
@@ -56,7 +57,7 @@ var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
 		udpAddr, ok := udpListener.LocalAddr().(*net.UDPAddr)
 
 		if !ok {
-			w.SendGeneralServerFailure()
+			_ = w.SendGeneralServerFailure()
 
 			return
 		}
