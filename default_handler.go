@@ -3,14 +3,18 @@ package final_socks
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
+	"time"
 
 	"github.com/lunelabs/final-socks/pool"
 )
 
 var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
+	fmt.Println(time.Now().Unix(), "start", "command", r.Command)
+
 	defer func() {
-		fmt.Println("end", r.Command)
+		fmt.Println(time.Now().Unix(), "end", "command", r.Command)
 	}()
 
 	if r.Command != CommandConnect && r.Command != CommandAssociate {
@@ -43,75 +47,58 @@ var DefaultHandler Handler = func(w ResponseWriter, r *Request) {
 		return
 	}
 
-	if r.Command == CommandAssociate {
-		udpListener, err := net.ListenPacket("udp", net.JoinHostPort(r.LocalAddr.IP.String(), "0"))
+	udpListener, err := net.ListenPacket("udp", net.JoinHostPort(r.LocalAddr.IP.String(), "0"))
 
-		if err != nil {
-			_ = w.SendGeneralServerFailure()
-
-			return
-		}
-
-		defer udpListener.Close()
-
-		udpAddr, ok := udpListener.LocalAddr().(*net.UDPAddr)
-
-		if !ok {
-			_ = w.SendGeneralServerFailure()
-
-			return
-		}
-
-		if err := w.SendSucceeded(&AddrSpec{IP: udpAddr.IP, Port: udpAddr.Port}); err != nil {
-			return
-		}
-
-		errChan := make(chan error)
-		ctx, cancel := context.WithCancel(context.Background())
-
-		go func() {
-			buf := pool.GetBuffer(1)
-			defer pool.PutBuffer(buf)
-
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-					_, err := r.BufConn.Read(buf)
-
-					if err, ok := err.(net.Error); ok && err.Timeout() {
-						continue
-					}
-
-					errChan <- nil
-				}
-			}
-		}()
-
-		go func() {
-			c := NewPktConn(udpListener, nil, nil, nil)
-			buf := pool.GetBuffer(UDPBufSize)
-
-			n, srcAddr, dstAddr, err := c.ReadFrom2(buf)
-
-			if err != nil {
-				errChan <- err
-
-				return
-			}
-
-			sessionKey := srcAddr.String()
-			session := NewSession(sessionKey, srcAddr, dstAddr, c, nil)
-
-			go session.Serve(ctx, errChan)
-
-			session.ProcessMessage(Message{dstAddr, buf[:n]})
-		}()
-
-		err = <-errChan
-		cancel()
+	if err != nil {
+		_ = w.SendGeneralServerFailure()
 
 		return
 	}
+
+	defer udpListener.Close()
+
+	udpAddr, ok := udpListener.LocalAddr().(*net.UDPAddr)
+
+	if !ok {
+		_ = w.SendGeneralServerFailure()
+
+		return
+	}
+
+	if err := w.SendSucceeded(&AddrSpec{IP: udpAddr.IP, Port: udpAddr.Port}); err != nil {
+		return
+	}
+
+	errChan := make(chan error)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		c := NewPktConn(udpListener, nil, nil, nil)
+		buf := pool.GetBuffer(UDPBufSize)
+
+		n, srcAddr, dstAddr, err := c.ReadFrom2(buf)
+
+		if err != nil {
+			errChan <- err
+
+			return
+		}
+
+		sessionKey := srcAddr.String()
+		session := NewSession(sessionKey, srcAddr, dstAddr, c, nil)
+
+		go session.Serve(ctx, errChan)
+
+		session.ProcessMessage(Message{dstAddr, buf[:n]})
+	}()
+
+	go func() {
+		_, _ = io.Copy(io.Discard, r.BufConn)
+
+		errChan <- nil
+	}()
+
+	<-errChan
+
+	cancel()
 }
