@@ -3,8 +3,10 @@ package final_socks
 import (
 	"bufio"
 	"fmt"
-	"github.com/pkg/errors"
 	"net"
+	"sort"
+
+	"github.com/pkg/errors"
 )
 
 type Handler func(ResponseWriter, *Request)
@@ -110,6 +112,8 @@ func (s *Server) authenticate(conn net.Conn, bufConn *bufio.Reader, rw ResponseW
 	if err != nil {
 		return nil, err
 	}
+
+	sort.Slice(authMethods, func(i, j int) bool { return authMethods[i] > authMethods[j] })
 
 	for _, authMethod := range authMethods {
 		if handler, ok := s.AuthHandlers[authMethod]; ok {
